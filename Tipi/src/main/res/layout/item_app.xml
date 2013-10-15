@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:id="@+id/item_app_label"
+          android:layout_width="wrap_content"
+          android:layout_height="78dip"
+          android:minHeight="78dip"
+          android:maxHeight="78dip"
+          android:paddingTop="4dip"
+          android:textSize="12sp"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="#fff"
+          android:gravity="center_horizontal|bottom"/>
