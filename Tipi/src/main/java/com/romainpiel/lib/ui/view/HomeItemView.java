@@ -2,14 +2,17 @@ package com.romainpiel.lib.ui.view;
 
 import android.content.Context;
 import android.graphics.Point;
+import android.support.v4.view.ViewPager;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
+import com.romainpiel.lib.ui.adapter.HomePagerAdapter;
 import com.romainpiel.lib.ui.view.inflate.InflateHelper;
 import com.romainpiel.lib.ui.view.inflate.OnViewChangedListener;
-import com.romainpiel.tipi.R;
 import com.romainpiel.lib.utils.ScreenUtils;
+import com.romainpiel.tipi.R;
 
+import butterknife.InjectView;
 import butterknife.Views;
 
 /**
@@ -19,6 +22,8 @@ import butterknife.Views;
  * Time: 14:40
  */
 public class HomeItemView extends FrameLayout implements OnViewChangedListener {
+
+    @InjectView(R.id.item_home_pager) ViewPager pager;
 
     InflateHelper inflateHelper;
     WindowManager windowManager;
@@ -57,5 +62,13 @@ public class HomeItemView extends FrameLayout implements OnViewChangedListener {
                 MeasureSpec.makeMeasureSpec(screen.x, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(screen.y, MeasureSpec.EXACTLY)
         );
+    }
+
+    public void setAdapter(HomePagerAdapter adapter) {
+        pager.setAdapter(adapter);
+    }
+
+    public void showSpace(int position) {
+        pager.setCurrentItem(position);
     }
 }

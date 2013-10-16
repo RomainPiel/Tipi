@@ -1,6 +1,5 @@
 package com.romainpiel.tipi.activity;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,11 +7,15 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
 import com.romainpiel.lib.ui.adapter.ApplicationsAdapter;
+import com.romainpiel.lib.ui.adapter.HomePagerAdapter;
 import com.romainpiel.lib.ui.effect.Blur;
 import com.romainpiel.lib.ui.view.HomeItemView;
 import com.romainpiel.lib.utils.BackgroundExecutor;
@@ -33,14 +36,16 @@ import butterknife.Views;
  * Date: 11/10/2013
  * Time: 19:04
  */
-public class HomeActivity extends Activity {
+public class HomeActivity extends FragmentActivity {
 
     @InjectView(R.id.activity_home_wallpaper) ImageView wallpaper;
     @InjectView(R.id.activity_home_wallpaper_blurred) ImageView blurredWallpaper;
     @InjectView(R.id.activity_home_listview) ListView listView;
     HomeItemView homeView;
 
-    ApplicationsAdapter adapter;
+    ApplicationsAdapter listAdapter;
+    HomePagerAdapter pagerAdapter;
+    View touchTarget;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,12 +56,15 @@ public class HomeActivity extends Activity {
 
         List<ApplicationInfo> apps = loadApplications();
 
-        adapter = new ApplicationsAdapter(this, apps);
+        listAdapter = new ApplicationsAdapter(this, apps);
 
         homeView = HomeItemView.build(this);
+        pagerAdapter = new HomePagerAdapter(getSupportFragmentManager());
+        homeView.setAdapter(pagerAdapter);
+        homeView.showSpace(2);
 
         listView.addHeaderView(homeView);
-        listView.setAdapter(adapter);
+        listView.setAdapter(listAdapter);
 
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
@@ -101,6 +109,20 @@ public class HomeActivity extends Activity {
                     }
                 }
         );
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (touchTarget != null) {
+            boolean wasProcessed = touchTarget.onTouchEvent(ev);
+
+            if (!wasProcessed) {
+                touchTarget = null;
+            }
+
+            return wasProcessed;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private List<ApplicationInfo> loadApplications() {
