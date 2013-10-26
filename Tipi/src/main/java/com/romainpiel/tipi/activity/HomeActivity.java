@@ -18,8 +18,6 @@ import com.romainpiel.lib.ui.adapter.ApplicationsAdapter;
 import com.romainpiel.lib.ui.adapter.HomePagerAdapter;
 import com.romainpiel.lib.ui.effect.Blur;
 import com.romainpiel.lib.ui.view.HomeItemView;
-import com.romainpiel.lib.utils.BackgroundExecutor;
-import com.romainpiel.lib.utils.Debug;
 import com.romainpiel.model.ApplicationInfo;
 import com.romainpiel.tipi.R;
 
@@ -29,6 +27,12 @@ import java.util.List;
 
 import butterknife.InjectView;
 import butterknife.Views;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscription;
+import rx.android.AndroidObservables;
+import rx.concurrency.Schedulers;
+import rx.subscriptions.Subscriptions;
 
 /**
  * Home
@@ -36,16 +40,15 @@ import butterknife.Views;
  * Date: 11/10/2013
  * Time: 19:04
  */
-public class HomeActivity extends FragmentActivity {
+public class HomeActivity extends FragmentActivity implements Observer<Bitmap> {
 
     @InjectView(R.id.activity_home_wallpaper) ImageView wallpaper;
     @InjectView(R.id.activity_home_wallpaper_blurred) ImageView blurredWallpaper;
     @InjectView(R.id.activity_home_listview) ListView listView;
     HomeItemView homeView;
-
-    ApplicationsAdapter listAdapter;
-    HomePagerAdapter pagerAdapter;
     View touchTarget;
+
+    private Subscription imageBlurSubscription;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +59,31 @@ public class HomeActivity extends FragmentActivity {
 
         List<ApplicationInfo> apps = loadApplications();
 
-        listAdapter = new ApplicationsAdapter(this, apps);
+        ApplicationsAdapter listAdapter = new ApplicationsAdapter(this, apps);
 
         homeView = HomeItemView.build(this);
-        pagerAdapter = new HomePagerAdapter(getSupportFragmentManager());
+        HomePagerAdapter pagerAdapter = new HomePagerAdapter(getSupportFragmentManager());
         homeView.setAdapter(pagerAdapter);
         homeView.showSpace(2);
 
         listView.addHeaderView(homeView);
         listView.setAdapter(listAdapter);
+        linkWallpaperWithListView();
 
+        wallpaper.setImageResource(R.drawable.image);
+
+        imageBlurSubscription = AndroidObservables.fromActivity(this, blurImage())
+                .subscribeOn(Schedulers.newThread())
+                .subscribe(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        imageBlurSubscription.unsubscribe();
+        super.onDestroy();
+    }
+
+    public void linkWallpaperWithListView() {
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -79,7 +97,6 @@ public class HomeActivity extends FragmentActivity {
                 // Calculate the ratio between the scroll amount and the list
                 // header weight to determinate the top picture alpha
                 float alpha = (float) -homeView.getTop() / (float) 700;
-                Debug.out(alpha);
                 // Apply a ceil
                 if (alpha > 1) {
                     alpha = 1;
@@ -91,24 +108,19 @@ public class HomeActivity extends FragmentActivity {
                 wallpaper.setTop(homeView.getTop() / 2);
             }
         });
+    }
 
-        wallpaper.setImageResource(R.drawable.image);
-
-        BackgroundExecutor.execute(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        Bitmap inputBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.image);
-                        final Bitmap outputBitmap = Blur.fastblur(HomeActivity.this, inputBitmap, 25);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                blurredWallpaper.setImageBitmap(outputBitmap);
-                            }
-                        });
-                    }
-                }
-        );
+    private Observable<Bitmap> blurImage() {
+        return Observable.create(new Observable.OnSubscribeFunc<Bitmap>() {
+            @Override
+            public Subscription onSubscribe(Observer<? super Bitmap> observer) {
+                Bitmap inputBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.image);
+                final Bitmap outputBitmap = Blur.fastblur(HomeActivity.this, inputBitmap, 25);
+                observer.onNext(outputBitmap);
+                observer.onCompleted();
+                return Subscriptions.empty();
+            }
+        });
     }
 
     @Override
@@ -160,4 +172,18 @@ public class HomeActivity extends FragmentActivity {
         return applications;
     }
 
+    @Override
+    public void onCompleted() {
+
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+
+    }
+
+    @Override
+    public void onNext(Bitmap bitmap) {
+        blurredWallpaper.setImageBitmap(bitmap);
+    }
 }

@@ -1,0 +1,3 @@
+[submodule "Library/RxJava"]
+	path = Library/RxJava
+	url = https://github.com/soundcloud/RxJava.git

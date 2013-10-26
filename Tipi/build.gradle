@@ -11,11 +11,13 @@ apply plugin: 'android'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     compile 'com.android.support:support-v4:18.0.+'
     compile 'com.jakewharton:butterknife:3.0.0'
+    compile 'com.netflix.rxjava:rxjava-android:0.14.3-SNAPSHOT'
 }
 
 android {
